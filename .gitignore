@@ -1,0 +1,29 @@
+# Environment & Secrets
+.env
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# YOLO & PyTorch model weights (downloaded automatically by Ultralytics)
+*.pt
+*.onnx
+
+# Analyzer temporary outputs & uploads
+jobs/
+*_frames/
+*_raw.txt
+Screen Recording*
+
+# OS and IDE files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

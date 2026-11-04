@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Football Move Analyzer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f7f9; --surface:#ffffff; --ink:#111827; --muted:#6b7280; --line:#e3e6eb;
+  --brand:#0f5132; --brand-hover:#0b3f27; --brand-soft:#e7f1ec; --err:#b42318; --err-soft:#fdecea;
+  --font:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#0e1215; --surface:#161b20; --ink:#eef1f4; --muted:#9aa4af; --line:#262d34;
+        --brand:#3fa371; --brand-hover:#53b783; --brand-soft:#15261e; --err:#f0877b; --err-soft:#2a1715}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+button{font:inherit;cursor:pointer}
+[hidden]{display:none!important}
+
+.topbar{background:var(--surface);border-bottom:1px solid var(--line)}
+.topbar .in{max-width:1040px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:12px}
+.mark{width:30px;height:30px;border-radius:8px;background:var(--brand);display:grid;place-items:center}
+.mark svg{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:1.8}
+.topbar b{font-weight:600;font-size:1.02rem;letter-spacing:-.005em}
+
+main{max-width:1040px;margin:0 auto;padding:40px 24px 72px}
+.lead{max-width:620px;margin:0 0 28px}
+.lead h1{font-size:1.9rem;line-height:1.2;letter-spacing:-.02em;margin:0 0 8px;font-weight:700}
+.lead p{margin:0;color:var(--muted)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px}
+
+/* upload */
+.drop{display:block;width:100%;text-align:center;padding:56px 24px;border:1.5px dashed #b9c0c9;border-radius:12px;background:var(--surface);color:inherit;transition:border-color .15s,background .15s}
+@media (prefers-color-scheme:dark){.drop{border-color:#38424b}}
+.drop:hover,.drop.drag{border-color:var(--brand);background:var(--brand-soft)}
+.drop .ico{width:44px;height:44px;margin:0 auto 14px;border-radius:50%;background:var(--brand-soft);display:grid;place-items:center}
+.drop .ico svg{width:22px;height:22px;stroke:var(--brand);fill:none;stroke-width:1.8}
+.drop strong{display:block;font-size:1.05rem;font-weight:600}
+.drop span.sub{display:block;color:var(--muted);font-size:.92rem;margin-top:4px}
+.chosen{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 18px;margin-top:16px}
+.chosen .n{font-weight:600;word-break:break-all}
+.chosen .s{color:var(--muted);font-size:.9rem}
+.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.btn{border:1px solid transparent;border-radius:8px;padding:10px 20px;font-weight:600;font-size:.97rem;background:var(--brand);color:#fff;text-decoration:none;display:inline-block}
+.btn:hover{background:var(--brand-hover)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.ghost:hover{background:var(--bg)}
+.link{background:none;border:0;color:var(--muted);padding:6px;font-size:.92rem;text-decoration:underline}
+.alert{margin-top:16px;padding:12px 16px;border-radius:8px;background:var(--err-soft);color:var(--err);font-weight:500}
+
+/* progress */
+.progress{padding:28px 28px 22px;max-width:640px}
+.progress h2{margin:0 0 4px;font-size:1.25rem;letter-spacing:-.01em}
+.progress .file{color:var(--muted);margin:0 0 20px;word-break:break-all;font-size:.93rem}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden;margin-bottom:20px}
+.bar i{display:block;height:100%;width:0;background:var(--brand);transition:width .5s ease}
+.steps{list-style:none;margin:0 0 20px;padding:0}
+.steps li{display:flex;align-items:center;gap:12px;padding:9px 0;color:var(--muted)}
+.steps .dot{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex:none;display:grid;place-items:center}
+.steps .dot svg{width:12px;height:12px;stroke:#fff;fill:none;stroke-width:3;display:none}
+.steps li.done{color:var(--ink)}
+.steps li.done .dot{background:var(--brand);border-color:var(--brand)}
+.steps li.done .dot svg{display:block}
+.steps li.now{color:var(--ink);font-weight:600}
+.steps li.now .dot{border-color:var(--brand);border-top-color:transparent;animation:spin .9s linear infinite}
+.steps .d{margin-left:auto;font-weight:400;color:var(--muted);font-size:.9rem}
+.note{color:var(--muted);font-size:.9rem;margin:0 0 18px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.steps li.now .dot{animation:none;border-top-color:var(--brand)}.bar i{transition:none}}
+
+/* report */
+.toolbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:16px}
+.toolbar h2{margin:0;font-size:1.25rem;letter-spacing:-.01em;word-break:break-all}
+iframe.report{width:100%;display:block;min-height:480px;border:1px solid var(--line);border-radius:12px;background:#fff}
+
+.history{margin-top:40px}
+.history h3{font-size:1rem;margin:0 0 10px;font-weight:600}
+.history ul{list-style:none;margin:0;padding:0}
+.history li{display:flex;justify-content:space-between;gap:12px;padding:11px 16px;border-bottom:1px solid var(--line)}
+.history li:last-child{border-bottom:0}
+.history a{color:var(--ink);font-weight:500;text-decoration:none;word-break:break-all}
+.history a:hover{color:var(--brand);text-decoration:underline}
+.history time{color:var(--muted);font-size:.88rem;white-space:nowrap}
+</style>
+</head>
+<body>
+<header class="topbar"><div class="in">
+  <div class="mark" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7l4 3-1.5 4.5h-5L8 10z"/></svg></div>
+  <b>Football Move Analyzer</b>
+</div></header>
+
+<main>
+  <!-- Upload -->
+  <section id="viewUpload">
+    <div class="lead">
+      <h1>Analyze a football clip</h1>
+      <p>Upload a video to receive a full movement report with findings, coaching points and better options for every player.</p>
+    </div>
+
+    <input type="file" id="video" accept="video/*" hidden>
+    <button type="button" class="drop" id="drop">
+      <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg></div>
+      <strong>Drop your video here, or click to browse</strong>
+      <span class="sub">MP4, MOV, AVI, MKV or WebM</span>
+    </button>
+
+    <div class="card chosen" id="chosen" hidden>
+      <div><div class="n" id="fileName"></div><div class="s" id="fileSize"></div></div>
+      <div class="row"><button class="link" id="remove" type="button">Remove</button><button class="btn" id="go" type="button">Analyze video</button></div>
+    </div>
+    <div class="alert" id="err" role="alert" hidden></div>
+  </section>
+
+  <!-- Progress -->
+  <section id="viewProgress" hidden>
+    <div class="card progress" aria-live="polite">
+      <h2>Analyzing your video</h2>
+      <p class="file" id="progFile"></p>
+      <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100"><i id="barFill"></i></div>
+      <ol class="steps" id="steps"></ol>
+      <p class="note">This usually takes a few minutes. You can keep this tab open while it runs.</p>
+      <div class="alert" id="progErr" role="alert" hidden></div>
+      <div class="row"><button class="btn ghost" id="cancel" type="button">Cancel</button></div>
+    </div>
+  </section>
+
+  <!-- Report: the HTML file produced by video_analyzer.py, shown unchanged -->
+  <section id="viewReport" hidden>
+    <div class="toolbar">
+      <h2 id="resName"></h2>
+      <div class="row">
+        <a class="btn ghost" id="openTab" target="_blank" rel="noopener">Open in new tab</a>
+        <a class="btn ghost" id="download" download>Download report</a>
+        <button class="btn" id="again" type="button">Analyze another video</button>
+      </div>
+    </div>
+    <iframe class="report" id="frame" title="Video analysis report" sandbox="allow-same-origin allow-popups"></iframe>
+  </section>
+
+  <section class="history" id="history" hidden>
+    <h3>Previous reports</h3>
+    <ul class="card" id="histList"></ul>
+  </section>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const CHECK = '<svg viewBox="0 0 12 12"><path d="M2 6.5l2.5 2.5L10 3.5"/></svg>';
+let file = null, jobId = null, timer = null, ready = true;
+
+function view(name) {
+  for (const v of ['Upload', 'Progress', 'Report']) $('view' + v).hidden = v !== name;
+  refreshHistory();
+}
+function showError(el, msg) { el.textContent = msg; el.hidden = !msg; }
+const size = b => b > 1e9 ? (b / 1e9).toFixed(1) + ' GB' : (b / 1e6).toFixed(1) + ' MB';
+
+/* ---- choose a file ---- */
+function setFile(f) {
+  file = f;
+  $('chosen').hidden = !f;
+  $('drop').hidden = !!f;
+  if (f) { $('fileName').textContent = f.name; $('fileSize').textContent = size(f.size); }
+  showError($('err'), ready ? '' : 'The analysis service is not available right now. Please try again later.');
+}
+$('drop').onclick = () => $('video').click();
+$('video').onchange = e => { if (e.target.files[0]) setFile(e.target.files[0]); };
+$('remove').onclick = () => { $('video').value = ''; setFile(null); };
+const isVideo = f => f && (f.type.startsWith('video/') || /\.(mp4|mov|m4v|avi|mkv|webm)$/i.test(f.name));
+['dragenter', 'dragover'].forEach(t => $('drop').addEventListener(t, e => { e.preventDefault(); $('drop').classList.add('drag'); }));
+['dragleave', 'drop'].forEach(t => $('drop').addEventListener(t, e => { e.preventDefault(); $('drop').classList.remove('drag'); }));
+$('drop').addEventListener('drop', e => {
+  const f = e.dataTransfer.files[0];
+  if (isVideo(f)) setFile(f); else showError($('err'), 'Please choose a video file (MP4, MOV, AVI, MKV or WebM).');
+});
+
+/* ---- start ---- */
+$('go').onclick = async () => {
+  if (!file) return;
+  showError($('err'), '');
+  $('go').disabled = true;
+  const fd = new FormData();
+  fd.append('video', file, file.name);
+  try {
+    const r = await fetch('/api/jobs', { method: 'POST', body: fd });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || 'The upload failed. Please try again.');
+    jobId = j.id;
+    $('progFile').textContent = j.video;
+    showError($('progErr'), '');
+    $('cancel').textContent = 'Cancel';
+    view('Progress');
+    render(j);
+    timer = setInterval(poll, 1500);
+  } catch (e) { showError($('err'), e.message); }
+  $('go').disabled = false;
+};
+
+/* ---- progress ---- */
+async function poll() {
+  try {
+    const j = await (await fetch('/api/jobs/' + jobId)).json();
+    render(j);
+    if (j.status === 'running') return;
+    clearInterval(timer);
+    if (j.status === 'done') showReport(j.report_url, j.video);
+    else if (j.status === 'cancelled') { view('Upload'); }
+    else { showError($('progErr'), 'The analysis could not be completed. Please try again with a different video.'); $('cancel').textContent = 'Back'; }
+  } catch (e) { /* temporary network issue: keep polling */ }
+}
+function render(j) {
+  const idx = j.steps.findIndex(s => s.key === j.step);
+  $('steps').innerHTML = j.steps.map((s, i) => {
+    const st = j.status === 'done' || i < idx ? 'done' : i === idx ? 'now' : '';
+    return `<li class="${st}"><span class="dot">${CHECK}</span>${s.label}${st === 'now' && j.detail ? `<span class="d">${j.detail}</span>` : ''}</li>`;
+  }).join('');
+  const pct = j.status === 'done' ? 100 : Math.round((idx / j.steps.length) * 100 + 4);
+  $('barFill').style.width = pct + '%';
+  $('barFill').parentElement.setAttribute('aria-valuenow', pct);
+}
+$('cancel').onclick = async () => {
+  if ($('cancel').textContent === 'Back') { view('Upload'); return; }
+  clearInterval(timer);
+  await fetch('/api/jobs/' + jobId + '/cancel', { method: 'POST' });
+  view('Upload');
+};
+
+/* ---- report ---- */
+function showReport(url, name) {
+  $('resName').textContent = name;
+  $('openTab').href = url;
+  $('download').href = url;
+  const f = $('frame');
+  f.onload = () => {
+    const d = f.contentDocument;
+    if (!d) return;
+    const fit = () => { f.style.height = d.documentElement.scrollHeight + 'px'; };
+    fit();
+    new ResizeObserver(fit).observe(d.body);
+    d.querySelectorAll('img').forEach(i => i.addEventListener('load', fit));
+  };
+  f.src = url;
+  view('Report');
+  window.scrollTo({ top: 0 });
+}
+$('again').onclick = () => { $('frame').src = 'about:blank'; $('video').value = ''; setFile(null); view('Upload'); };
+
+/* ---- previous reports ---- */
+async function refreshHistory() {
+  try {
+    const list = await (await fetch('/api/jobs')).json();
+    $('histList').innerHTML = list.map(m =>
+      `<li><a href="#" data-url="${m.report_url}" data-name="${m.video}">${m.video}</a><time>${new Date(m.created * 1000).toLocaleString()}</time></li>`).join('');
+    $('history').hidden = !list.length || $('viewUpload').hidden;
+  } catch (e) {}
+}
+$('histList').onclick = e => {
+  const a = e.target.closest('a[data-url]');
+  if (a) { e.preventDefault(); showReport(a.dataset.url, a.dataset.name); }
+};
+
+fetch('/api/config').then(r => r.json()).then(c => { ready = c.ready; if (!ready) showError($('err'), 'The analysis service is not available right now. Please try again later.'); });
+refreshHistory();
+</script>
+</body>
+</html>

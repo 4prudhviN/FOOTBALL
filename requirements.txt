@@ -1,0 +1,6 @@
+flask
+openai
+opencv-python
+numpy
+# optional, for body measurements and tracking:
+# ultralytics
